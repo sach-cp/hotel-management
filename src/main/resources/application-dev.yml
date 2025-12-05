@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: hotel_management
+  datasource:
+    url: jdbc:postgresql://localhost:5432/hotel_management
+    username: postgres
+    password: postdev
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+## CORS Configs
+cors:
+  allowed-origins:
+    - http://localhost:4200
+    - http://localhost:4201
