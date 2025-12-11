@@ -2,16 +2,22 @@ spring:
   application:
     name: hotel_management
   datasource:
-    url: jdbc:postgresql://localhost:5432/hotel_management
-    username: postgres
-    password: postdev
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
       ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
 
 ## CORS Configs
 cors:
   allowed-origins:
     - http://localhost:4200
     - http://localhost:4201
+
+server:
+  port: ${PORT:8081}
