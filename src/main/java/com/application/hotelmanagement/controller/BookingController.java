@@ -37,9 +37,18 @@ public class BookingController {
         return bookingService.getBooking(bookingId);
     }
 
-    @GetMapping
-    public List<BookingSummaryResponse> getAllBookings(@RequestParam @DateTimeFormat(pattern = "dd-MM-yyyy") LocalDate bookingDate) {
+    @GetMapping("/by-date")
+    public List<BookingSummaryResponse> getAllBookingsByDate(@RequestParam @DateTimeFormat(pattern = "dd-MM-yyyy")
+                                                             LocalDate bookingDate) {
         return bookingService.getAllBookingsByDate(bookingDate);
+    }
+
+    @GetMapping("/by-range")
+    public List<BookingSummaryResponse> getAllBookingsByDateRange(@RequestParam @DateTimeFormat(pattern = "dd-MM-yyyy")
+                                                                  LocalDate fromDate,
+                                                                  @RequestParam @DateTimeFormat(pattern = "dd-MM-yyy")
+                                                                  LocalDate toDate) {
+        return bookingService.getAllBookingsByDateRange(fromDate, toDate);
     }
 
     @PutMapping("/{bookingId}")

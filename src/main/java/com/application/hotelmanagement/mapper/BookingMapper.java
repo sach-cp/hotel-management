@@ -1,6 +1,8 @@
 package com.application.hotelmanagement.mapper;
 
+import com.application.hotelmanagement.dto.AddressDto;
 import com.application.hotelmanagement.dto.BookingDto;
+import com.application.hotelmanagement.dto.CustomerDto;
 import com.application.hotelmanagement.model.Address;
 import com.application.hotelmanagement.model.Booking;
 import com.application.hotelmanagement.model.Customer;
@@ -12,8 +14,10 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class BookingMapper {
 
-    public static Booking fromDtoToEntity(BookingDto bookingDto) {
+    public static Booking fromBookingDtoToEntity(BookingDto bookingDto) {
+        Customer customer = fromCustomerDtoToEntity(bookingDto.getCustomerDto());
         return Booking.builder()
+                .customer(customer)
                 .checkInDate(bookingDto.getCheckInDate())
                 .checkOutDate(bookingDto.getCheckOutDate())
                 .numberOfPersons(bookingDto.getNumberOfPersons())
@@ -25,13 +29,33 @@ public class BookingMapper {
                 .build();
     }
 
+    public static Customer fromCustomerDtoToEntity(CustomerDto customerDto) {
+        Address address = fromAddressDtoToEntity(customerDto.getAddressDto());
+        return Customer.builder()
+                .firstName(customerDto.getFirstName())
+                .lastName(customerDto.getLastName())
+                .address(address)
+                .phoneNumber(customerDto.getPhoneNumber())
+                .build();
+    }
+
+    public static Address fromAddressDtoToEntity(AddressDto addressDto) {
+        return Address.builder()
+                .addressDetails(addressDto.getAddressDetails())
+                .city(addressDto.getCity())
+                .state(addressDto.getState())
+                .country(addressDto.getCountry())
+                .pinCode(addressDto.getPinCode())
+                .build();
+    }
+
     public static BookingResponse fromEntityToResponse(Booking booking) {
         CustomerResponse customerResponse = convertCustomerEntityToResponse(booking.getCustomer());
         return BookingResponse.builder()
-                .hotelName(booking.getHotel().getHotelName())
                 .bookingId(booking.getBookingId())
-                .roomType(booking.getRoom().getRoomType())
-                .roomNumber(booking.getRoom().getRoomNumber())
+                .hotelName(booking.getHotelName())
+                .roomType(booking.getRoomType())
+                .roomNumber(booking.getRoomNumber())
                 .checkInDate(booking.getCheckInDate())
                 .checkOutDate(booking.getCheckOutDate())
                 .numberOfPersons(booking.getNumberOfPersons())

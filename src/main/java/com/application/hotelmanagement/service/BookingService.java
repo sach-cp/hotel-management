@@ -13,4 +13,6 @@ public interface BookingService {
     List<BookingSummaryResponse> getAllBookingsByDate(LocalDate bookingDate);
     String updateBooking(BookingDto bookingDto, Long bookingId);
     String deleteBooking(Long bookingId);
+
+    List<BookingSummaryResponse> getAllBookingsByDateRange(LocalDate fromDate, LocalDate toDate);
 }

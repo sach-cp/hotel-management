@@ -4,12 +4,11 @@ import com.application.hotelmanagement.dto.BookingDto;
 import com.application.hotelmanagement.exception.BookingNotFoundException;
 import com.application.hotelmanagement.mapper.BookingMapper;
 import com.application.hotelmanagement.mapper.BookingSummaryMapper;
-import com.application.hotelmanagement.mapper.CustomerMapper;
 import com.application.hotelmanagement.model.Booking;
-import com.application.hotelmanagement.model.Room;
 import com.application.hotelmanagement.repo.BookingRepository;
 import com.application.hotelmanagement.response.BookingResponse;
 import com.application.hotelmanagement.response.BookingSummaryResponse;
+import com.application.hotelmanagement.response.RoomResponse;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -32,22 +31,32 @@ public class BookingServiceImpl implements BookingService {
     @Transactional
     public String createBooking(BookingDto bookingDto, Long roomId) {
         log.info("Attempting to book room for roomId: {}", roomId);
-        Room room = roomService.findRoom(bookingDto.getRoomId());
-        Booking finalBooking = BookingMapper.fromDtoToEntity(bookingDto);
-        finalBooking.setHotel(room.getHotel());
-        finalBooking.setRoom(room);
-        finalBooking.setCustomer(CustomerMapper.fromDtoToEntity(bookingDto.getCustomerDto(),
-                bookingDto.getCustomerDto().getAddressDto()));
-        finalBooking.setBookingStatus("BOOKED");
-        finalBooking.setBookingDate(LocalDate.now());
-        finalBooking.setAdvanceAmount(bookingDto.getAdvanceAmount());
-        finalBooking.setTotalAmount(bookingDto.getTotalAmount());
-        finalBooking.setPurposeOfVisit(bookingDto.getPurposeOfVisit());
-        finalBooking.setBookingDate(LocalDate.now());
-        Booking savedBooking = bookingRepository.save(finalBooking);
-        log.info("Created new booking for hotel: {} with room number: {}", savedBooking.getHotel().getHotelName(),
-                room.getRoomNumber());
-        return "Successfully booked with booking id: " + savedBooking.getBookingId();
+        boolean isAvailable = roomService.isRoomExistsAndAvailable(roomId, bookingDto.getCheckInDate(),
+                bookingDto.getCheckOutDate());
+        if (isAvailable) {
+            RoomResponse roomResponse = roomService.getByRoomId(roomId);
+            Booking finalBooking = BookingMapper.fromBookingDtoToEntity(bookingDto);
+            finalBooking.setHotelId(roomResponse.getHotelId());
+            finalBooking.setHotelName(roomResponse.getHotelName());
+            finalBooking.setRoomId(roomResponse.getRoomId());
+            finalBooking.setRoomType(roomResponse.getRoomType());
+            finalBooking.setRoomBookingPrice(roomResponse.getPrice());
+            finalBooking.setCustomer(BookingMapper.fromCustomerDtoToEntity(bookingDto.getCustomerDto()));
+            finalBooking.setBookingStatus("BOOKED");
+            finalBooking.setBookingDate(LocalDate.now());
+            finalBooking.setAdvanceAmount(bookingDto.getAdvanceAmount());
+            finalBooking.setTotalAmount(bookingDto.getTotalAmount());
+            finalBooking.setPurposeOfVisit(bookingDto.getPurposeOfVisit());
+            finalBooking.setBookingDate(LocalDate.now());
+
+            Booking savedBooking = bookingRepository.save(finalBooking);
+            log.info("Created new booking for room Id: {}", savedBooking.getRoomId());
+            return "Successfully booked with booking id: " + savedBooking.getBookingId();
+        } else {
+            log.info("Booking failed for selected dates: check-in: {} and check-out: {}",
+                    bookingDto.getCheckInDate(), bookingDto.getCheckOutDate());
+            return "Booking failed, Room is already booked or confirmed for the selected dates";
+        }
     }
 
     @Override
@@ -64,42 +73,56 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public List<BookingSummaryResponse> getAllBookingsByDate(LocalDate bookingDate) {
+        log.info("Looking for bookings for the date: {}", bookingDate);
         List<Booking> bookings = bookingRepository.findAllBookingsByDate(bookingDate);
         if (CollectionUtils.isEmpty(bookings)) {
             log.info("No bookings found for Date: {}", bookingDate);
             return Collections.emptyList();
-        } else return bookings.stream()
-                .map(BookingSummaryMapper::fromEntityToResponse)
-                .toList();
+        } else {
+            log.info("{} bookings found for the date: {}", bookings.size(), bookingDate);
+            return bookings.stream()
+                    .map(BookingSummaryMapper::fromEntityToResponse)
+                    .toList();
+        }
     }
 
     @Override
     @Transactional
     public String updateBooking(BookingDto bookingDto, Long bookingId) {
-        Booking existingBooking = getExistingBooking(bookingId);
-        List<Booking> bookingConflicts = bookingRepository.findBookingConflicts(
-                existingBooking.getRoom().getRoomId(),
+        log.info("Retrieving existing booking details for bookingId: {}", bookingId);
+        Booking booking = getExistingBooking(bookingId);
+        log.info("Looking for any conflicts");
+        List<Booking> bookingConflicts = bookingRepository.findBookingConflicts(booking.getRoomId(),
                 bookingDto.getCheckInDate(),
                 bookingDto.getCheckOutDate(),
-                existingBooking.getBookingId());
+                booking.getBookingId());
 
-        if (!bookingConflicts.isEmpty()) {
-            return "Cannot update booking due to a conflict with existing booking: " + bookingConflicts
-                    .stream().map(Booking::getBookingId);
+        if (bookingConflicts.isEmpty()) {
+            log.info("No conflicts found, Attempting to update booking");
+            booking.setCheckInDate(bookingDto.getCheckInDate());
+            booking.setCheckOutDate(bookingDto.getCheckOutDate());
         } else {
-            existingBooking.setCheckInDate(bookingDto.getCheckInDate());
-            existingBooking.setCheckOutDate(bookingDto.getCheckOutDate());
+            log.info("Booking cannot be updated due to conflict with other booking: {}",
+                    bookingConflicts.stream().map(Booking::getBookingId));
+            return "Cannot update booking due to a conflict with other booking" ;
         }
-
-        return "Successfully updated your booking with booking id: " + existingBooking.getBookingId();
+        return "Successfully updated your booking with booking id: " + booking.getBookingId();
     }
 
     @Override
     @Transactional
     public String deleteBooking(Long bookingId) {
+        log.info("Retrieving existing booking for deleting with bookingId: {}", bookingId);
         Booking existingBooking = getExistingBooking(bookingId);
+        log.info("Deleting booking for bookingId: {}", bookingId);
         bookingRepository.delete(existingBooking);
         return "Successfully deleted booking with booking id: " + bookingId;
+    }
+
+    @Override
+    public List<BookingSummaryResponse> getAllBookingsByDateRange(LocalDate fromDate, LocalDate toDate) {
+        List<Booking> bookings = bookingRepository.findAllBookingsByDateRange(fromDate, toDate);
+        return bookings.stream().map(BookingSummaryMapper::fromEntityToResponse).toList();
     }
 
     private Booking getExistingBooking(Long bookingId) {

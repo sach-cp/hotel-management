@@ -23,9 +23,6 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class BookingDto {
 
-    @NotNull(message = "RoomId cannot be null")
-    private Long roomId;
-
     @NotNull(message = "Number of persons is mandatory")
     @Min(value = 1, message = "Number of persons must be at least 1")
     @Max(value = 3, message = "Number of persons must not exceed 3")

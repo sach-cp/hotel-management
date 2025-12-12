@@ -13,17 +13,20 @@ import java.util.List;
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     @Query("SELECT b FROM Booking b " +
-            "WHERE b.room.roomId = :roomId " +
+            "WHERE b.roomId = :roomId " +
             "AND b.bookingId <> :currentBookingId " +
             "AND ((:checkInDate BETWEEN b.checkInDate AND b.checkOutDate) " +
             "OR (:checkOutDate BETWEEN b.checkInDate AND b.checkOutDate) " +
             "OR (b.checkInDate BETWEEN :checkInDate AND :checkOutDate) " +
             "OR (b.checkOutDate BETWEEN :checkInDate AND :checkOutDate)) ")
     List<Booking> findBookingConflicts(@Param("roomId") Long roomId,
-                                      @Param("checkInDate") LocalDate checkInDate,
-                                      @Param("checkOutDate") LocalDate checkOutDate,
-                                      @Param("currentBookingId") Long currentBookingId);
+                                       @Param("checkInDate") LocalDate checkInDate,
+                                       @Param("checkOutDate") LocalDate checkOutDate,
+                                       @Param("currentBookingId") Long currentBookingId);
 
     @Query("SELECT b FROM Booking b WHERE b.bookingDate = :date")
     List<Booking> findAllBookingsByDate(LocalDate date);
+
+    @Query("SELECT b FROM Booking b WHERE b.checkInDate <= :toDate AND b.checkOutDate >= :fromDate ")
+    List<Booking> findAllBookingsByDateRange(@Param("fromDate") LocalDate fromDate, @Param("toDate") LocalDate toDate);
 }

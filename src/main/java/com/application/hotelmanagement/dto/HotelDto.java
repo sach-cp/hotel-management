@@ -1,6 +1,5 @@
 package com.application.hotelmanagement.dto;
 
-import com.application.hotelmanagement.model.Address;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

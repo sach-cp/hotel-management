@@ -8,19 +8,18 @@ import java.time.LocalDate;
 @Data
 @Builder
 public class BookingResponse {
-    private String hotelName;
     private Long bookingId;
+    private String hotelName;
+    private String roomType;
+    private Integer roomNumber;
     private LocalDate checkInDate;
     private LocalDate checkOutDate;
     private LocalDate bookingDate;
     private Integer numberOfPersons;
-    private String roomType;
-    private Integer roomNumber;
     private Double price;
     private String status;
     private String purposeOfVisit;
     private Double advanceAmount;
     private String paymentStatus;
     private CustomerResponse customerResponse;
-
 }
