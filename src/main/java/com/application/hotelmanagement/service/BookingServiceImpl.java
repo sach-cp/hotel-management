@@ -5,6 +5,8 @@ import com.application.hotelmanagement.exception.BookingNotFoundException;
 import com.application.hotelmanagement.mapper.BookingMapper;
 import com.application.hotelmanagement.mapper.BookingSummaryMapper;
 import com.application.hotelmanagement.model.Booking;
+import com.application.hotelmanagement.model.Hotel;
+import com.application.hotelmanagement.model.Room;
 import com.application.hotelmanagement.repo.BookingRepository;
 import com.application.hotelmanagement.response.BookingResponse;
 import com.application.hotelmanagement.response.BookingSummaryResponse;
@@ -24,6 +26,7 @@ import java.util.List;
 @AllArgsConstructor
 public class BookingServiceImpl implements BookingService {
 
+    private final HotelService hotelService;
     private final RoomService roomService;
     private final BookingRepository bookingRepository;
 
@@ -34,13 +37,11 @@ public class BookingServiceImpl implements BookingService {
         boolean isAvailable = roomService.isRoomExistsAndAvailable(roomId, bookingDto.getCheckInDate(),
                 bookingDto.getCheckOutDate());
         if (isAvailable) {
-            RoomResponse roomResponse = roomService.getByRoomId(roomId);
+            Room room = roomService.findRoom(roomId);
+            Hotel hotel = hotelService.findHotelById(room.getHotel().getHotelId());
             Booking finalBooking = BookingMapper.fromBookingDtoToEntity(bookingDto);
-            finalBooking.setHotelId(roomResponse.getHotelId());
-            finalBooking.setHotelName(roomResponse.getHotelName());
-            finalBooking.setRoomId(roomResponse.getRoomId());
-            finalBooking.setRoomType(roomResponse.getRoomType());
-            finalBooking.setRoomBookingPrice(roomResponse.getPrice());
+            finalBooking.setHotel(hotel);
+            finalBooking.setRoom(room);
             finalBooking.setCustomer(BookingMapper.fromCustomerDtoToEntity(bookingDto.getCustomerDto()));
             finalBooking.setBookingStatus("BOOKED");
             finalBooking.setBookingDate(LocalDate.now());
@@ -50,7 +51,7 @@ public class BookingServiceImpl implements BookingService {
             finalBooking.setBookingDate(LocalDate.now());
 
             Booking savedBooking = bookingRepository.save(finalBooking);
-            log.info("Created new booking for room Id: {}", savedBooking.getRoomId());
+            log.info("Created new booking for room Id: {}", savedBooking.getRoom().getRoomId());
             return "Successfully booked with booking id: " + savedBooking.getBookingId();
         } else {
             log.info("Booking failed for selected dates: check-in: {} and check-out: {}",
@@ -92,7 +93,7 @@ public class BookingServiceImpl implements BookingService {
         log.info("Retrieving existing booking details for bookingId: {}", bookingId);
         Booking booking = getExistingBooking(bookingId);
         log.info("Looking for any conflicts");
-        List<Booking> bookingConflicts = bookingRepository.findBookingConflicts(booking.getRoomId(),
+        List<Booking> bookingConflicts = bookingRepository.findBookingConflicts(booking.getRoom().getRoomId(),
                 bookingDto.getCheckInDate(),
                 bookingDto.getCheckOutDate(),
                 booking.getBookingId());
@@ -104,7 +105,7 @@ public class BookingServiceImpl implements BookingService {
         } else {
             log.info("Booking cannot be updated due to conflict with other booking: {}",
                     bookingConflicts.stream().map(Booking::getBookingId));
-            return "Cannot update booking due to a conflict with other booking" ;
+            return "Cannot update booking due to a conflict with other booking";
         }
         return "Successfully updated your booking with booking id: " + booking.getBookingId();
     }

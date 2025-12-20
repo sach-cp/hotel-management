@@ -13,7 +13,7 @@ import java.util.List;
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     @Query("SELECT b FROM Booking b " +
-            "WHERE b.roomId = :roomId " +
+            "WHERE b.room.roomId = :roomId " +
             "AND b.bookingId <> :currentBookingId " +
             "AND ((:checkInDate BETWEEN b.checkInDate AND b.checkOutDate) " +
             "OR (:checkOutDate BETWEEN b.checkInDate AND b.checkOutDate) " +

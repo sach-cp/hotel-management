@@ -9,6 +9,8 @@ import com.application.hotelmanagement.repo.HotelRepository;
 import com.application.hotelmanagement.response.HotelResponse;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +25,7 @@ public class HotelServiceImpl implements HotelService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "hotelsCache", key = "'allHotels'")
     public String createHotel(HotelDto hotelDto) {
         Hotel hotel = HotelMapper.fromDtoToEntity(hotelDto);
         log.info("Saving new hotel: {}", hotel.getHotelName());
@@ -51,6 +54,7 @@ public class HotelServiceImpl implements HotelService {
     }
 
     @Override
+    @Cacheable(value = "hotelsCache", key = "'allHotels'")
     public List<HotelResponse> findAllHotels() {
         log.info("Fetching all hotels");
         return hotelRepository.findAll()

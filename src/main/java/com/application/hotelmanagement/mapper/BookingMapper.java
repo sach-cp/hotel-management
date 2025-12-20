@@ -6,6 +6,7 @@ import com.application.hotelmanagement.dto.CustomerDto;
 import com.application.hotelmanagement.model.Address;
 import com.application.hotelmanagement.model.Booking;
 import com.application.hotelmanagement.model.Customer;
+import com.application.hotelmanagement.model.Room;
 import com.application.hotelmanagement.response.AddressResponse;
 import com.application.hotelmanagement.response.BookingResponse;
 import com.application.hotelmanagement.response.CustomerResponse;
@@ -51,11 +52,12 @@ public class BookingMapper {
 
     public static BookingResponse fromEntityToResponse(Booking booking) {
         CustomerResponse customerResponse = convertCustomerEntityToResponse(booking.getCustomer());
+        Room room = booking.getRoom();
         return BookingResponse.builder()
                 .bookingId(booking.getBookingId())
-                .hotelName(booking.getHotelName())
-                .roomType(booking.getRoomType())
-                .roomNumber(booking.getRoomNumber())
+                .hotelName(booking.getHotel().getHotelName())
+                .roomType(room.getRoomType())
+                .roomNumber(room.getRoomNumber())
                 .checkInDate(booking.getCheckInDate())
                 .checkOutDate(booking.getCheckOutDate())
                 .numberOfPersons(booking.getNumberOfPersons())
