@@ -17,7 +17,7 @@ spring:
 cors:
   allowed-origins:
     - http://localhost:4200
-    - http://localhost:4201
+    - https://sach-cp.github.io
 
 server:
   port: ${PORT:8080}
