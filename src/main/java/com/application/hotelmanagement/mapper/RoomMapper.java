@@ -2,6 +2,7 @@ package com.application.hotelmanagement.mapper;
 
 import com.application.hotelmanagement.dto.RoomDto;
 import com.application.hotelmanagement.model.Room;
+import com.application.hotelmanagement.model.RoomStatus;
 import com.application.hotelmanagement.response.RoomResponse;
 import lombok.experimental.UtilityClass;
 
@@ -12,6 +13,7 @@ public class RoomMapper {
                 .roomType(roomDto.getRoomType())
                 .roomNumber(roomDto.getRoomNumber())
                 .price(roomDto.getPrice())
+                .roomStatus(RoomStatus.AVAILABLE)
                 .build();
     }
 
@@ -23,6 +25,7 @@ public class RoomMapper {
                 .roomType(room.getRoomType())
                 .roomNumber(room.getRoomNumber())
                 .price(room.getPrice())
+                .roomStatus(room.getRoomStatus())
                 .build();
     }
 }

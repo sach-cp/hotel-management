@@ -5,12 +5,13 @@ import com.application.hotelmanagement.exception.BookingNotFoundException;
 import com.application.hotelmanagement.mapper.BookingMapper;
 import com.application.hotelmanagement.mapper.BookingSummaryMapper;
 import com.application.hotelmanagement.model.Booking;
+import com.application.hotelmanagement.model.BookingStatus;
 import com.application.hotelmanagement.model.Hotel;
 import com.application.hotelmanagement.model.Room;
+import com.application.hotelmanagement.model.RoomStatus;
 import com.application.hotelmanagement.repo.BookingRepository;
 import com.application.hotelmanagement.response.BookingResponse;
 import com.application.hotelmanagement.response.BookingSummaryResponse;
-import com.application.hotelmanagement.response.RoomResponse;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -42,8 +43,14 @@ public class BookingServiceImpl implements BookingService {
             Booking finalBooking = BookingMapper.fromBookingDtoToEntity(bookingDto);
             finalBooking.setHotel(hotel);
             finalBooking.setRoom(room);
+            if (bookingDto.getCheckInDate().isEqual(LocalDate.now())) {
+                room.setRoomStatus(RoomStatus.CHECKED_IN);
+                finalBooking.setStatus(BookingStatus.CHECKED_IN);
+            } else {
+                room.setRoomStatus(RoomStatus.CONFIRMED);
+                finalBooking.setStatus(BookingStatus.CONFIRMED);
+            }
             finalBooking.setCustomer(BookingMapper.fromCustomerDtoToEntity(bookingDto.getCustomerDto()));
-            finalBooking.setBookingStatus("BOOKED");
             finalBooking.setBookingDate(LocalDate.now());
             finalBooking.setAdvanceAmount(bookingDto.getAdvanceAmount());
             finalBooking.setTotalAmount(bookingDto.getTotalAmount());

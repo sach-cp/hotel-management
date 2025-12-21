@@ -3,6 +3,8 @@ package com.application.hotelmanagement.model;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -49,8 +51,8 @@ public class Booking {
     @Column(name = "number_of_persons", nullable = false, length = 10)
     private Integer numberOfPersons;
 
-    @Column(name = "booking_status", nullable = false, length = 20)
-    private String bookingStatus;
+    @Enumerated(EnumType.STRING)
+    private BookingStatus status;
 
     @Column(name = "purpose_of_visit", length = 100)
     private String purposeOfVisit;

@@ -1,5 +1,6 @@
 package com.application.hotelmanagement.response;
 
+import com.application.hotelmanagement.model.RoomStatus;
 import lombok.Builder;
 import lombok.Data;
 
@@ -12,4 +13,5 @@ public class RoomResponse {
     private String roomType;
     private Integer roomNumber;
     private Double price;
+    private RoomStatus roomStatus;
 }

@@ -3,12 +3,15 @@ package com.application.hotelmanagement.service;
 import com.application.hotelmanagement.dto.RoomDto;
 import com.application.hotelmanagement.exception.RoomNotFoundException;
 import com.application.hotelmanagement.mapper.RoomMapper;
+import com.application.hotelmanagement.model.BookingStatus;
 import com.application.hotelmanagement.model.Hotel;
 import com.application.hotelmanagement.model.Room;
 import com.application.hotelmanagement.repo.RoomRepository;
 import com.application.hotelmanagement.response.RoomResponse;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +29,7 @@ public class RoomServiceImpl implements RoomService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "rooms", key = "'allRooms'", allEntries = true)
     public String createRoom(RoomDto roomDto, Long hotelId) {
         log.info("Attempting to add room {} to hotelId {}", roomDto.getRoomNumber(), hotelId);
         Hotel hotel = hotelService.findHotelById(hotelId);
@@ -63,6 +67,7 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
+    @Cacheable(value = "rooms", key = "'allRooms'")
     public List<RoomResponse> getAllRooms(Long hotelId) {
         log.info("Fetching all rooms for hotelId: {}", hotelId);
         Optional<List<Room>> rooms = roomRepository.findAllRoomsByHotel_HotelId(hotelId);
@@ -122,8 +127,8 @@ public class RoomServiceImpl implements RoomService {
                 .orElseThrow(() -> new RoomNotFoundException("Room not found for room Id" + roomId));
         boolean hasOverlap = room.getBookings()
                 .stream()
-                .filter(b -> b.getBookingStatus().equals("CONFIRMED") ||
-                        b.getBookingStatus().equals("BOOKED"))
+                .filter(b -> b.getStatus().equals(BookingStatus.CONFIRMED) ||
+                        b.getStatus().equals(BookingStatus.CHECKED_IN))
                 .anyMatch(b -> b.getCheckInDate().isBefore(checkOut) &&
                         b.getCheckOutDate().isAfter(checkIn));
         log.info("Room availability is: {}", !hasOverlap);

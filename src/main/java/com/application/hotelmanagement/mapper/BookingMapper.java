@@ -62,7 +62,7 @@ public class BookingMapper {
                 .checkOutDate(booking.getCheckOutDate())
                 .numberOfPersons(booking.getNumberOfPersons())
                 .price(booking.getTotalAmount())
-                .status(booking.getBookingStatus())
+                .status(booking.getStatus().toString())
                 .purposeOfVisit(booking.getPurposeOfVisit())
                 .advanceAmount(booking.getAdvanceAmount())
                 .paymentStatus(booking.getPaymentStatus())
