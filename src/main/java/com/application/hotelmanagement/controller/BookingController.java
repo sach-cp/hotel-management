@@ -28,7 +28,7 @@ public class BookingController {
     private BookingService bookingService;
 
     @PostMapping("/rooms/{roomId}")
-    public String createBooking(@Valid @RequestBody BookingDto bookingDto, @PathVariable(name = "roomId") Long roomId) {
+    public BookingResponse createBooking(@Valid @RequestBody BookingDto bookingDto, @PathVariable(name = "roomId") Long roomId) {
         return bookingService.createBooking(bookingDto, roomId);
     }
 

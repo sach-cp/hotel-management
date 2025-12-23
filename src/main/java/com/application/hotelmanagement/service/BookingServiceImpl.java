@@ -2,6 +2,7 @@ package com.application.hotelmanagement.service;
 
 import com.application.hotelmanagement.dto.BookingDto;
 import com.application.hotelmanagement.exception.BookingNotFoundException;
+import com.application.hotelmanagement.exception.RoomNotAvailableException;
 import com.application.hotelmanagement.mapper.BookingMapper;
 import com.application.hotelmanagement.mapper.BookingSummaryMapper;
 import com.application.hotelmanagement.model.Booking;
@@ -33,38 +34,41 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional
-    public String createBooking(BookingDto bookingDto, Long roomId) {
+    public BookingResponse createBooking(BookingDto bookingDto, Long roomId) {
         log.info("Attempting to book room for roomId: {}", roomId);
         boolean isAvailable = roomService.isRoomExistsAndAvailable(roomId, bookingDto.getCheckInDate(),
                 bookingDto.getCheckOutDate());
-        if (isAvailable) {
-            Room room = roomService.findRoom(roomId);
-            Hotel hotel = hotelService.findHotelById(room.getHotel().getHotelId());
-            Booking finalBooking = BookingMapper.fromBookingDtoToEntity(bookingDto);
-            finalBooking.setHotel(hotel);
-            finalBooking.setRoom(room);
-            if (bookingDto.getCheckInDate().isEqual(LocalDate.now())) {
-                room.setRoomStatus(RoomStatus.CHECKED_IN);
-                finalBooking.setStatus(BookingStatus.CHECKED_IN);
-            } else {
-                room.setRoomStatus(RoomStatus.CONFIRMED);
-                finalBooking.setStatus(BookingStatus.CONFIRMED);
-            }
-            finalBooking.setCustomer(BookingMapper.fromCustomerDtoToEntity(bookingDto.getCustomerDto()));
-            finalBooking.setBookingDate(LocalDate.now());
-            finalBooking.setAdvanceAmount(bookingDto.getAdvanceAmount());
-            finalBooking.setTotalAmount(bookingDto.getTotalAmount());
-            finalBooking.setPurposeOfVisit(bookingDto.getPurposeOfVisit());
-            finalBooking.setBookingDate(LocalDate.now());
 
-            Booking savedBooking = bookingRepository.save(finalBooking);
-            log.info("Created new booking for room Id: {}", savedBooking.getRoom().getRoomId());
-            return "Successfully booked with booking id: " + savedBooking.getBookingId();
-        } else {
-            log.info("Booking failed for selected dates: check-in: {} and check-out: {}",
-                    bookingDto.getCheckInDate(), bookingDto.getCheckOutDate());
-            return "Booking failed, Room is already booked or confirmed for the selected dates";
+        if (!isAvailable) {
+            log.warn("Booking failed for roomId {} between {} and {}", roomId, bookingDto.getCheckInDate(),
+                    bookingDto.getCheckOutDate());
+
+            throw new RoomNotAvailableException("Room is already booked or confirmed for the selected dates");
         }
+
+        Room room = roomService.findRoom(roomId);
+        Hotel hotel = hotelService.findHotelById(room.getHotel().getHotelId());
+        Booking finalBooking = BookingMapper.fromBookingDtoToEntity(bookingDto);
+        finalBooking.setHotel(hotel);
+        finalBooking.setRoom(room);
+        if (bookingDto.getCheckInDate().isEqual(LocalDate.now())) {
+            room.setRoomStatus(RoomStatus.CHECKED_IN);
+            finalBooking.setStatus(BookingStatus.CHECKED_IN);
+        } else {
+            room.setRoomStatus(RoomStatus.CONFIRMED);
+            finalBooking.setStatus(BookingStatus.CONFIRMED);
+        }
+        finalBooking.setCustomer(BookingMapper.fromCustomerDtoToEntity(bookingDto.getCustomerDto()));
+        finalBooking.setBookingDate(LocalDate.now());
+        finalBooking.setAdvanceAmount(bookingDto.getAdvanceAmount());
+        finalBooking.setTotalAmount(bookingDto.getTotalAmount());
+        finalBooking.setPurposeOfVisit(bookingDto.getPurposeOfVisit());
+        finalBooking.setBookingDate(LocalDate.now());
+
+        roomService.updateRoomStatus(room);
+        Booking savedBooking = bookingRepository.save(finalBooking);
+        log.info("Created new booking for room Id: {}", savedBooking.getRoom().getRoomId());
+        return BookingMapper.fromEntityToResponse(savedBooking);
     }
 
     @Override

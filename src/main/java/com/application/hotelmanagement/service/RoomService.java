@@ -31,4 +31,5 @@ public interface RoomService {
     boolean isRoomExistsAndAvailable(Long roomId, LocalDate checkIn, LocalDate checkOut);
 
     RoomResponse getByRoomId(Long roomId);
+    Room updateRoomStatus(Room room);
 }

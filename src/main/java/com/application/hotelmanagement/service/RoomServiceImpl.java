@@ -29,7 +29,6 @@ public class RoomServiceImpl implements RoomService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "rooms", key = "'allRooms'", allEntries = true)
     public String createRoom(RoomDto roomDto, Long hotelId) {
         log.info("Attempting to add room {} to hotelId {}", roomDto.getRoomNumber(), hotelId);
         Hotel hotel = hotelService.findHotelById(hotelId);
@@ -67,7 +66,6 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
-    @Cacheable(value = "rooms", key = "'allRooms'")
     public List<RoomResponse> getAllRooms(Long hotelId) {
         log.info("Fetching all rooms for hotelId: {}", hotelId);
         Optional<List<Room>> rooms = roomRepository.findAllRoomsByHotel_HotelId(hotelId);
@@ -141,4 +139,7 @@ public class RoomServiceImpl implements RoomService {
                 .orElseThrow(() -> new RoomNotFoundException("Room not found for room Id" + roomId));
         return RoomMapper.fromEntityToResponse(room);
     }
+
+    @Override
+    public Room updateRoomStatus(Room room) { return roomRepository.save(room); }
 }
