@@ -99,6 +99,37 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    public List<BookingSummaryResponse> getAllBookingsByEmail(String emailId) {
+        log.info("Searching bookings for emailId: {}", emailId);
+//        List<Booking> bookings = bookingRepository.findAllBookingsByEmailId(emailId);
+//        if (CollectionUtils.isEmpty(bookings)) {
+//            log.info("No bookings found for emailId: {}", emailId);
+//            return Collections.emptyList();
+//        } else {
+//            log.info("{} bookings found for emailId: {}", bookings.size(), emailId);
+//            return bookings.stream()
+//                    .map(BookingSummaryMapper::fromEntityToResponse)
+//                    .toList();
+//        }
+        return Collections.emptyList();
+    }
+
+    @Override
+    public List<BookingSummaryResponse> getAllBookingsByPhoneNumber(String phoneNumber) {
+        log.info("Searching bookings for phone number: {}", phoneNumber);
+        List<Booking> bookings = bookingRepository.findAllBookingsByPhoneNumber(phoneNumber);
+        if (CollectionUtils.isEmpty(bookings)) {
+            log.info("No bookings found for phoneNumber: {}", phoneNumber);
+            return Collections.emptyList();
+        } else {
+            log.info("{} bookings found for phoneNumber: {}", bookings.size(), phoneNumber);
+            return bookings.stream()
+                    .map(BookingSummaryMapper::fromEntityToResponse)
+                    .toList();
+        }
+    }
+
+    @Override
     @Transactional
     public String updateBooking(BookingDto bookingDto, Long bookingId) {
         log.info("Retrieving existing booking details for bookingId: {}", bookingId);

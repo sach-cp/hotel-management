@@ -11,6 +11,8 @@ public interface BookingService {
     BookingResponse createBooking(BookingDto booking, Long roomId);
     BookingResponse getBooking(Long bookingId);
     List<BookingSummaryResponse> getAllBookingsByDate(LocalDate bookingDate);
+    List<BookingSummaryResponse> getAllBookingsByEmail(String emailId);
+    List<BookingSummaryResponse> getAllBookingsByPhoneNumber(String phoneNumber);
     String updateBooking(BookingDto bookingDto, Long bookingId);
     String deleteBooking(Long bookingId);
 

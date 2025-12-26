@@ -14,7 +14,7 @@ import org.springframework.validation.annotation.Validated;
 public class AddressDto {
 
     @NotBlank(message = "Address details are mandatory")
-    @Size(min = 2, max = 50, message = "Address details must be between 2 to 50 characters")
+    @Size(min = 2, max = 100, message = "Address details must be between 2 to 100 characters")
     private String addressDetails;
 
     @NotBlank(message = "City is mandatory")
