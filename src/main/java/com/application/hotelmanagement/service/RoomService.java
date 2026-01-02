@@ -8,13 +8,10 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface RoomService {
-    String createRoom(RoomDto roomDto, Long hotelId);
-    RoomResponse getRoom(Long hotelId, Integer roomNumber);
-    RoomResponse getRoomById(Long hotelId, Long roomId);
+    RoomResponse createRoom(RoomDto roomDto, Long hotelId);
     List<RoomResponse> getAllRooms(Long hotelId);
-    List<RoomResponse> getAvailableRooms(Long hotelId, LocalDate checkInDate, LocalDate checkOutDate);
-    String updateRoom(RoomDto roomDto, Long hotelId, Integer roomNumber);
-    String deleteRoom(Long hotelId, Integer roomNumber);
+    RoomResponse updateRoom(RoomDto roomDto, Long hotelId, Long roomId);
+    void deleteRoom(Long hotelId, Long roomId);
 
     /**
      * Do not delete this method as it is called in createNewBooking method in Booking Service
@@ -23,13 +20,14 @@ public interface RoomService {
     Room findRoom(Long roomId);
 
     /**
-     *
-     * @param roomId is the parameter to search room existence and
-     *               checks availability by checkIn and checkOut dates.
-     * @return true/false based on room existence and availability.
+     * Do not delete this method as it is called in createNewBooking method in Booking Service
+     * If exists and available for booking returns a true value else a false value
      */
-    boolean isRoomExistsAndAvailable(Long roomId, LocalDate checkIn, LocalDate checkOut);
+    Boolean isRoomExistsAndAvailable(Long roomId, LocalDate checkIn, LocalDate checkOut);
 
-    RoomResponse getByRoomId(Long roomId);
+    /**
+     * Do not delete this method as it is called in createNewBooking method in Booking Service
+     * It updates the room status in the room entity while booking a room
+     */
     Room updateRoomStatus(Room room);
 }

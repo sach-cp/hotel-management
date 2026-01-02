@@ -12,12 +12,3 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-
-## CORS Configs
-cors:
-  allowed-origins:
-    - http://localhost:4200
-    - https://sach-cp.github.io
-
-server:
-  port: ${PORT:8080}

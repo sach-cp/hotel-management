@@ -10,11 +10,11 @@ import java.util.List;
 public interface BookingService {
     BookingResponse createBooking(BookingDto booking, Long roomId);
     BookingResponse getBooking(Long bookingId);
-    List<BookingSummaryResponse> getAllBookingsByDate(LocalDate bookingDate);
-    List<BookingSummaryResponse> getAllBookingsByEmail(String emailId);
-    List<BookingSummaryResponse> getAllBookingsByPhoneNumber(String phoneNumber);
-    String updateBooking(BookingDto bookingDto, Long bookingId);
-    String deleteBooking(Long bookingId);
+    BookingResponse updateBooking(BookingDto bookingDto, Long bookingId);
+    void deleteBooking(Long bookingId);
 
+    // Search bookings by various parameters like bookingDate, fromDate & toDate, phoneNumber
+    List<BookingSummaryResponse> getAllBookingsByDate(LocalDate bookingDate);
     List<BookingSummaryResponse> getAllBookingsByDateRange(LocalDate fromDate, LocalDate toDate);
+    List<BookingSummaryResponse> getAllBookingsByPhoneNumber(String phoneNumber);
 }

@@ -6,9 +6,11 @@ import com.application.hotelmanagement.response.BookingSummaryResponse;
 import com.application.hotelmanagement.service.BookingService;
 import io.micrometer.common.util.StringUtils;
 import jakarta.validation.Valid;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,44 +26,43 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@AllArgsConstructor
+@RequiredArgsConstructor
 @RequestMapping("/api/v1/bookings")
 public class BookingController {
 
-    private BookingService bookingService;
+    private final BookingService bookingService;
 
     @PostMapping("/rooms/{roomId}")
-    public BookingResponse createBooking(@Valid @RequestBody BookingDto bookingDto, @PathVariable(name = "roomId") Long roomId) {
-        return bookingService.createBooking(bookingDto, roomId);
+    public ResponseEntity<BookingResponse> createBooking(@Valid @RequestBody BookingDto bookingDto,
+                                                         @PathVariable Long roomId) {
+        BookingResponse bookingResponse = bookingService.createBooking(bookingDto, roomId);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .header(HttpHeaders.LOCATION, "/api/v1/bookings/" + bookingResponse.getBookingId())
+                .body(bookingResponse);
     }
 
-    // Search by Booking ID
     @GetMapping("/{bookingId}")
-    public BookingResponse getBooking(@PathVariable Long bookingId) {
-        return bookingService.getBooking(bookingId);
+    public ResponseEntity<BookingResponse> getBooking(@PathVariable Long bookingId) {
+        return ResponseEntity.ok(bookingService.getBooking(bookingId));
     }
 
-    // Search by various parameters like bookingDate, fromDate & toDate, emailId, phoneNumber
+    // Search by various parameters like bookingDate, fromDate & toDate, phoneNumber
     @GetMapping("/search")
-    public List<BookingSummaryResponse> getBookings(@RequestParam(required = false) @DateTimeFormat(pattern = "dd-MM-yyyy")
-                                                    LocalDate bookingDate,
-                                                    @RequestParam(required = false) @DateTimeFormat(pattern = "dd-MM-yyyy")
-                                                    LocalDate fromDate,
-                                                    @RequestParam(required = false) @DateTimeFormat(pattern = "dd-MM-yyyy")
-                                                    LocalDate toDate,
-                                                    @RequestParam(required = false) String emailId,
-                                                    @RequestParam(required = false) String phoneNumber) {
+    public ResponseEntity<List<BookingSummaryResponse>> getBookings(
+            @RequestParam(required = false) @DateTimeFormat(pattern = "dd-MM-yyyy") LocalDate bookingDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "dd-MM-yyyy") LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "dd-MM-yyyy") LocalDate toDate,
+            @RequestParam(required = false) String phoneNumber) {
         if (bookingDate != null) {
-            return bookingService.getAllBookingsByDate(bookingDate);
+            return ResponseEntity.ok(bookingService.getAllBookingsByDate(bookingDate));
         } else if (fromDate != null && toDate != null) {
             if (fromDate.isAfter(toDate)) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "fromDate must be before or equal to toDate");
             }
-            return bookingService.getAllBookingsByDateRange(fromDate, toDate);
-        } else if (StringUtils.isNotBlank(emailId)) {
-            return bookingService.getAllBookingsByEmail(emailId);
+            return ResponseEntity.ok(bookingService.getAllBookingsByDateRange(fromDate, toDate));
         } else if (StringUtils.isNotBlank(phoneNumber)) {
-            return bookingService.getAllBookingsByPhoneNumber(phoneNumber);
+            return ResponseEntity.ok(bookingService.getAllBookingsByPhoneNumber(phoneNumber));
         } else {
             throw new IllegalArgumentException("Invalid parameters");
         }
@@ -69,13 +70,15 @@ public class BookingController {
 
 
     @PutMapping("/{bookingId}")
-    public String updateBooking(@Valid @RequestBody BookingDto bookingDto, @PathVariable Long bookingId) {
-        return bookingService.updateBooking(bookingDto, bookingId);
+    public ResponseEntity<BookingResponse> updateBooking(@Valid @RequestBody BookingDto bookingDto,
+                                                         @PathVariable Long bookingId) {
+        return ResponseEntity.ok(bookingService.updateBooking(bookingDto, bookingId));
     }
 
     @DeleteMapping("/{bookingId}")
-    public String deleteBooking(@PathVariable Long bookingId) {
-        return bookingService.deleteBooking(bookingId);
+    public ResponseEntity<Void> deleteBooking(@PathVariable Long bookingId) {
+        bookingService.deleteBooking(bookingId);
+        return ResponseEntity.noContent().build();
     }
 
 }

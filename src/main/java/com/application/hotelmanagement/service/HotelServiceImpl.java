@@ -13,6 +13,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import java.util.List;
 
@@ -26,80 +27,68 @@ public class HotelServiceImpl implements HotelService {
     @Override
     @Transactional
     @CacheEvict(value = "hotels", key = "'allHotels'", allEntries = true)
-    public String createHotel(HotelDto hotelDto) {
+    public HotelResponse createHotel(HotelDto hotelDto) {
+        log.info("Saving new hotel: {}", hotelDto.getHotelName());
         Hotel hotel = HotelMapper.fromDtoToEntity(hotelDto);
-        log.info("Saving new hotel: {}", hotel.getHotelName());
         Hotel savedHotel = hotelRepository.save(hotel);
-        log.info("Hotel saved successfully with hotelId: {}", savedHotel.getHotelId());
-        return "Successfully created new hotel";
+        log.info("Hotel saved successfully with HotelId: {}", savedHotel.getHotelId());
+        return HotelMapper.fromEntityToResponse(savedHotel);
     }
 
     @Override
     public HotelResponse getHotelById(Long hotelId) {
         log.info("Searching for hotel with hotelId: {}", hotelId);
-        Hotel hotel = hotelRepository.findById(hotelId).orElseThrow(() ->
-                new HotelNotFoundException("Hotel with hotelId: " + hotelId + " not found"));
-        log.info("Found hotel with hotelId: {}", hotelId);
+        Hotel hotel = findHotelById(hotelId);
+        log.info("Hotel found with hotelId: {}", hotelId);
         return HotelMapper.fromEntityToResponse(hotel);
-    }
-
-    @Override
-    public List<HotelResponse> getHotelByName(String hotelName) {
-        log.info("Searching for hotel with hotel name: {}", hotelName);
-        List<Hotel> existingHotel = findHotelByHotelName(hotelName);
-        log.info("List of hotels: {}", existingHotel.stream());
-        return existingHotel.stream()
-                .map(HotelMapper::fromEntityToResponse)
-                .toList();
     }
 
     @Override
     @Cacheable(value = "hotels", key = "'allHotels'")
     public List<HotelResponse> findAllHotels() {
         log.info("Fetching all hotels");
-        return hotelRepository.findAll()
-                .stream()
-                .map(HotelMapper::fromEntityToResponse)
-                .toList();
+        List<Hotel> hotels = hotelRepository.findAll();
+        if (CollectionUtils.isEmpty(hotels)) {
+            log.info("No hotels found in the database");
+            throw new HotelNotFoundException("No hotels found");
+        }
+        log.info("Hotels found: {}", hotels.size());
+        return hotels.stream().map(HotelMapper::fromEntityToResponse).toList();
     }
 
     @Override
     @Transactional
-    public String updateHotel(HotelDto hotelDto, Long hotelId) {
-        log.info("Updating hotel with hotel name: {}", hotelId);
+    @CacheEvict(value = "hotels", key = "'allHotels'", allEntries = true)
+    public HotelResponse updateHotel(HotelDto hotelDto, Long hotelId) {
+        log.info("Updating hotel with ID: {}", hotelId);
         Hotel existingHotel = findHotelById(hotelId);
-        existingHotel.setAddress(AddressMapper.fromDtoToEntity(hotelDto.getAddressDto()));
-        existingHotel.setPhoneNumber(hotelDto.getPhoneNumber());
-        existingHotel.setEmailId(hotelDto.getEmailId());
-        log.info("Updating hotel with updated values for hotelId: {}", existingHotel.getHotelId());
-        hotelRepository.save(existingHotel);
-        return existingHotel.getHotelName() + " hotel successfully updated";
+        log.info("Hotel: {} found with hotelId: {}", existingHotel.getHotelName(), hotelId);
+        Hotel updatedHotel = HotelMapper.fromDtoToEntity(hotelDto);
+        hotelRepository.save(updatedHotel);
+        log.info("Hotel: {} updated successfully with hotelId: {}", updatedHotel.getHotelName(), hotelId);
+        return HotelMapper.fromEntityToResponse(updatedHotel);
     }
 
     @Override
     @Transactional
-    public String deleteHotel(Long hotelId) {
-        log.info("Deleting hotel with hotelId: {}", hotelId);
-        Hotel hotel = hotelRepository.findById(hotelId).orElseThrow(() ->
-                new HotelNotFoundException("Hotel with hotelId: " + hotelId + " not found"));
-        hotelRepository.delete(hotel);
-        log.info("Successfully deleted hotel with hotelId: {}", hotelId);
-        return hotel.getHotelName() + " hotel successfully deleted";
+    @CacheEvict(value = "hotels", key = "'allHotels'", allEntries = true)
+    public void deleteHotel(Long hotelId) {
+        log.info("Deleting hotel with ID: {}", hotelId);
+        Hotel existingHotel = findHotelById(hotelId);
+        log.info("Hotel: {} found with hotelId: {}", existingHotel.getHotelName(), hotelId);
+        hotelRepository.delete(existingHotel);
+        log.info("Hotel: {} deleted successfully with hotelId: {}", existingHotel.getHotelName(), hotelId);
     }
 
-    @Override
-    public List<Hotel> findHotelByHotelName(String hotelName) {
-        log.info("Finding hotel by hotel name: {}", hotelName);
-        return hotelRepository.findByHotelName(hotelName)
-                .orElseThrow(() -> new HotelNotFoundException(hotelName + " hotel not found"))
-                .stream()
-                .toList();
-    }
-
+    /**
+     * This method is used for finding hotel by hotel ID for internal use and should not be deleted.
+     * This method is for finding a hotel by its hotel ID and returns Hotel entity
+     * If the hotel is not found, it throws a HotelNotFoundException.
+     */
     @Override
     public Hotel findHotelById(Long hotelId) {
-        log.info("Finding hotel by hotel Id: {}", hotelId);
-        return hotelRepository.findById(hotelId).orElseThrow(() ->
-                new HotelNotFoundException("Hotel with hotel Id: " + hotelId + " not found"));
+        log.info("Finding hotel by Id: {}", hotelId);
+        return hotelRepository.findById(hotelId)
+                .orElseThrow(() -> new HotelNotFoundException("Hotel not found with Id: " + hotelId));
     }
 }

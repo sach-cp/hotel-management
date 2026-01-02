@@ -42,7 +42,6 @@ public class BookingServiceImpl implements BookingService {
         if (!isAvailable) {
             log.warn("Booking failed for roomId {} between {} and {}", roomId, bookingDto.getCheckInDate(),
                     bookingDto.getCheckOutDate());
-
             throw new RoomNotAvailableException("Room is already booked or confirmed for the selected dates");
         }
 
@@ -51,6 +50,7 @@ public class BookingServiceImpl implements BookingService {
         Booking finalBooking = BookingMapper.fromBookingDtoToEntity(bookingDto);
         finalBooking.setHotel(hotel);
         finalBooking.setRoom(room);
+
         if (bookingDto.getCheckInDate().isEqual(LocalDate.now())) {
             room.setRoomStatus(RoomStatus.CHECKED_IN);
             finalBooking.setStatus(BookingStatus.CHECKED_IN);
@@ -58,6 +58,10 @@ public class BookingServiceImpl implements BookingService {
             room.setRoomStatus(RoomStatus.CONFIRMED);
             finalBooking.setStatus(BookingStatus.CONFIRMED);
         }
+
+        Room updatedRoom = roomService.updateRoomStatus(room);
+        log.info("Room status updated to {} for roomId: {}", updatedRoom.getRoomStatus(), roomId);
+
         finalBooking.setCustomer(BookingMapper.fromCustomerDtoToEntity(bookingDto.getCustomerDto()));
         finalBooking.setBookingDate(LocalDate.now());
         finalBooking.setAdvanceAmount(bookingDto.getAdvanceAmount());
@@ -65,7 +69,6 @@ public class BookingServiceImpl implements BookingService {
         finalBooking.setPurposeOfVisit(bookingDto.getPurposeOfVisit());
         finalBooking.setBookingDate(LocalDate.now());
 
-        roomService.updateRoomStatus(room);
         Booking savedBooking = bookingRepository.save(finalBooking);
         log.info("Created new booking for room Id: {}", savedBooking.getRoom().getRoomId());
         return BookingMapper.fromEntityToResponse(savedBooking);
@@ -99,22 +102,6 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingSummaryResponse> getAllBookingsByEmail(String emailId) {
-        log.info("Searching bookings for emailId: {}", emailId);
-//        List<Booking> bookings = bookingRepository.findAllBookingsByEmailId(emailId);
-//        if (CollectionUtils.isEmpty(bookings)) {
-//            log.info("No bookings found for emailId: {}", emailId);
-//            return Collections.emptyList();
-//        } else {
-//            log.info("{} bookings found for emailId: {}", bookings.size(), emailId);
-//            return bookings.stream()
-//                    .map(BookingSummaryMapper::fromEntityToResponse)
-//                    .toList();
-//        }
-        return Collections.emptyList();
-    }
-
-    @Override
     public List<BookingSummaryResponse> getAllBookingsByPhoneNumber(String phoneNumber) {
         log.info("Searching bookings for phone number: {}", phoneNumber);
         List<Booking> bookings = bookingRepository.findAllBookingsByPhoneNumber(phoneNumber);
@@ -131,7 +118,7 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional
-    public String updateBooking(BookingDto bookingDto, Long bookingId) {
+    public BookingResponse updateBooking(BookingDto bookingDto, Long bookingId) {
         log.info("Retrieving existing booking details for bookingId: {}", bookingId);
         Booking booking = getExistingBooking(bookingId);
         log.info("Looking for any conflicts");
@@ -147,31 +134,34 @@ public class BookingServiceImpl implements BookingService {
         } else {
             log.info("Booking cannot be updated due to conflict with other booking: {}",
                     bookingConflicts.stream().map(Booking::getBookingId));
-            return "Cannot update booking due to a conflict with other booking";
         }
-        return "Successfully updated your booking with booking id: " + booking.getBookingId();
+        return BookingMapper.fromEntityToResponse(booking);
     }
 
     @Override
     @Transactional
-    public String deleteBooking(Long bookingId) {
+    public void deleteBooking(Long bookingId) {
         log.info("Retrieving existing booking for deleting with bookingId: {}", bookingId);
         Booking existingBooking = getExistingBooking(bookingId);
         log.info("Deleting booking for bookingId: {}", bookingId);
         bookingRepository.delete(existingBooking);
-        return "Successfully deleted booking with booking id: " + bookingId;
+        log.info("Successfully deleted booking with booking id: {}", bookingId);
     }
 
     @Override
     public List<BookingSummaryResponse> getAllBookingsByDateRange(LocalDate fromDate, LocalDate toDate) {
         List<Booking> bookings = bookingRepository.findAllBookingsByDateRange(fromDate, toDate);
+        if (CollectionUtils.isEmpty(bookings)) {
+            log.info("No bookings found between fromDate: {} and toDate: {}", fromDate, toDate);
+            return Collections.emptyList();
+        }
         return bookings.stream().map(BookingSummaryMapper::fromEntityToResponse).toList();
     }
 
     private Booking getExistingBooking(Long bookingId) {
-        log.info("Searching for booking with booking id: {}", bookingId);
+        log.info("Searching for booking with bookingId: {}", bookingId);
         return bookingRepository.findById(bookingId).orElseThrow(() ->
-                new BookingNotFoundException("Booking not found for id: " + bookingId));
+                new BookingNotFoundException("Booking not found for bookingId: " + bookingId));
     }
 
 }
